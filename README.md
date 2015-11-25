@@ -1,2 +1,1 @@
-# Dev-Environment
-Holds my configurations
+Will need to install git, pathogen, and tmux 
