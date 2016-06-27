@@ -1,4 +1,18 @@
-execute pathogen#infect()
+
+set nocompatible              " be iMproved, required
+filetype off                  " required
+
+" set the runtime path to include Vundle and initialize
+set rtp+=~/.vim/bundle/Vundle.vim
+call vundle#begin()
+"
+" " let Vundle manage Vundle, required
+Plugin 'VundleVim/Vundle.vim'
+
+Plugin 'Valloric/YouCompleteMe'
+
+call vundle#end()
+
 filetype plugin indent on
 set backspace=2         " backspace in insert mode works like normal editor
 syntax on               " syntax highlighting
@@ -51,6 +65,9 @@ syntax enable
 "set laststatus=2
 "set statusline+=%F
 set title
+
+nnoremap d "_d
+vnoremap d "_d
 
 set completeopt-=preview
 "
