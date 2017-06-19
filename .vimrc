@@ -75,4 +75,5 @@ let g:ycm_autoclose_preview_window_after_completion=1
 let g:ycm_complete_in_comments=1
 let g:ycm_min_num_of_chars_for_completion=1
 let g:ycm_confirm_extra_conf=0
+let g:ycm_python_binary_path='/usr/bin/python3'
 set clipboard=unnamed
