@@ -1,0 +1,11 @@
+Classes:
+    base class requires virtual destructor
+    func() override; for virtual overiding base class
+    func() noexcept; iff function will never throw
+
+Keywords:
+    nullptr (prefer over NULL, due to type)
+    func()=delete (prefer over blank declaration)
+    enum class Name { (prefer over enum Name)
+    constexp (variable that is constant and known at compilation)
+    constexp (function return compile time constants (has special rules for declaration)
