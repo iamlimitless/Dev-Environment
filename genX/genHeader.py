@@ -21,24 +21,22 @@ def GenerateOpenIFDef(className):
 def GenerateCloseIFDef(className):
     return "#endif // " + ClassNameToSymbol(className)
 
-def GenerateClassCode(className):
-    return "class " + className + "\n{\n};\n\n"
+def GenerateInheritance(className, interfaceEnabled):
+    if interfaceEnabled:
+        return " : public I" + className
+    return ""
+
+def GenerateOpenClassCode(className, interfaceEnabled=False):
+    return "class " + className + GenerateInheritance(className, interfaceEnabled) + "\n{\n"
+
+def GenerateCloseClassCode():
+    return "\n};\n\n"
+
 
 def WriteHeader(className):
     with open(className + ".h", "w") as outputFile:
         outputFile.write(GenerateOpenIFDef(className))
-        outputFile.write(GenerateClassCode(className))
+        outputFile.write(GenerateOpenClassCode(className))
+        outputFile.write(GenerateCloseClassCode())
         outputFile.write(GenerateCloseIFDef(className))
 
-def main():
-    parser = argparse.ArgumentParser(description="Configure C++ Header Generator")
-    parser.add_argument('className', type=str, help="class name for which to generate header files")
-
-    args = parser.parse_args()
-    className = StripFileExtension(args.className)
-
-    WriteHeader(className)
-
-
-if __name__ == "__main__":
-    main()

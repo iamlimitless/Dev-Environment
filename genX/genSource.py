@@ -1,7 +1,8 @@
 import argparse
 import genHeader
 
-#TODO refactor and clean up. See if we can merge/ combine code between files for genSource and genHeader 
+
+#TODO might be cleaner to make these classes? wouldn't have to pass className around.
 
 def AddBraces(signature):
     return signature + "\n{\n}\n\n"
@@ -14,9 +15,7 @@ def IsFunctionPrototype(line):
 
 def ParsePrototypeLine(prototypeList):
     functionFound = False
-    returnType = ""
-    function = ""
-    qualifiers = ""
+    function = returnType = qualifiers = ""
     
     for word in prototypeList:
         if "(" in word:
@@ -36,7 +35,6 @@ def GenerateSignature(className, prototypeLine):
 
 
 def ParseFile(headerFile):
-    #parses file for className and header list
     className = ""
     prototypeList = []
     for line in headerFile:
@@ -53,40 +51,56 @@ def GenerateOutputFileName(header, interfaceEnabled):
     else:
         return header.split(".h")[0] + ".cpp"
 
-def WriteSource(header, interfaceEnabled):
+def ParseHeader(header):
     with open(header, "r") as headerFile:
-        functionList, className = ParseFile(headerFile)
+         return ParseFile(headerFile)
 
-    filename = GenerateOutputFileName(header, interfaceEnabled) 
-    
+def WriteInterfaceFile(header, filename, functionList, className):
     with open(filename, "w") as outfile:
-        if interfaceEnabled:
-            className = genHeader.StripFileExtension(filename)
-            outfile.write(genHeader.GenerateOpenIFDef(className))
-            outfile.write("#include \"" + header + "\"\n\n")
-            outfile.write(genHeader.GenerateClassCode(className).split("}")[0] + "\n")
-        else:
-            outfile.write("#include \"" + header + "\"\n\n")
-
+        outfile.write(genHeader.GenerateOpenIFDef(className))
+        outfile.write("#include \"" + header + "\"\n\n")
+        outfile.write(genHeader.GenerateOpenClassCode(className, True))
         for func in functionList:
-            if interfaceEnabled:
-                outfile.write(AddOverride(func))
-            else:
-                outfile.write(AddBraces(GenerateSignature(className, func)))
+            outfile.write(AddOverride(func))
 
-        if interfaceEnabled:
-            outfile.write("};\n\n")
-            outfile.write(genHeader.GenerateCloseIFDef(genHeader.StripFileExtension(filename)))
+        outfile.write(genHeader.GenerateCloseClassCode())
+        outfile.write(genHeader.GenerateCloseIFDef(className))
+
+def WriteSourceFile(header, filename, functionList, className):
+    with open(filename, "w") as outfile:
+        outfile.write("#include \"" + header + "\"\n\n")
+        for func in functionList:
+            outfile.write(AddBraces(GenerateSignature(className, func)))
+
+def WriteSource(header, interfaceEnabled=False):
+    functionList, className = ParseHeader(header)
+    filename = GenerateOutputFileName(header, interfaceEnabled) 
+
+    if interfaceEnabled:
+        WriteInterfaceFile(header, filename, functionList, className[1:])
+    else:
+        WriteSourceFile(header, filename, functionList, className)
+
+def ParseCmdArguments():
+    parser = argparse.ArgumentParser(description="Configure C++ Source Generator")
+    parser.add_argument('fileName', type=str, help="File name to generate source for. If there is no extension provided it is assumed we want a header file called <fileName>.h")
+    parser.add_argument('type', type=str, default="header", help="What type of source to generate. Options are header, source, or interface")
+    args = parser.parse_args()
+    return args.fileName, args.type
+
 
 def main():
-    parser = argparse.ArgumentParser(description="Configure C++ Source Generator")
-    parser.add_argument('fileName', type=str, help="Header file for which to generate source for")
-    parser.add_argument('interface', type=bool, default=False, help="Generate in interface mode")
 
-    args = parser.parse_args()
-    headerFile = args.fileName
+    filename, fileType = ParseCmdArguments()
 
-    WriteSource(headerFile, args.interface)
+    if fileType == "header":
+        genHeader.WriteHeader(genHeader.StripFileExtension(filename))
+    elif fileType == "source":
+        WriteSource(filename)
+    elif fileType == "interface":
+        WriteSource(filename, True)
+    else:
+        print("Invalid file type provided. Valid types are header, source, and interface")
 
 
 if __name__ == "__main__":
