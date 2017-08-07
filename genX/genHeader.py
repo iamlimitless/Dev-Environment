@@ -1,7 +1,7 @@
 import argparse
 import re
 
-def StripFileExtention(fileName):
+def StripFileExtension(fileName):
     return fileName.split(".h")[0]
 
 def ClassNameToSymbol(className):
@@ -35,7 +35,7 @@ def main():
     parser.add_argument('className', type=str, help="class name for which to generate header files")
 
     args = parser.parse_args()
-    className = StripFileExtention(args.className)
+    className = StripFileExtension(args.className)
 
     WriteHeader(className)
 

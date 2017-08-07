@@ -1,12 +1,13 @@
 import argparse
+import genHeader
 
-#TODO extend this to generate a header file that overrides an interface
+#TODO refactor and clean up. See if we can merge/ combine code between files for genSource and genHeader 
 
 def AddBraces(signature):
     return signature + "\n{\n}\n\n"
 
 def AddOverride(signature):
-    return signature.split(";")[0] + " override;"
+    return signature.split("= 0")[0] + "override;\n\n"
 
 def IsFunctionPrototype(line):
     return "(" in line and line.endswith(";\n") and "default" not in line and "delete" not in line and "/" not in line and line.lstrip()[0] != "*"
@@ -46,23 +47,41 @@ def ParseFile(headerFile):
     return(prototypeList, className)
 
 
+def GenerateOutputFileName(header, interfaceEnabled):
+    if interfaceEnabled:
+        return header[1:]
+    else:
+        return header.split(".h")[0] + ".cpp"
+
 def WriteSource(header, interfaceEnabled):
     with open(header, "r") as headerFile:
         functionList, className = ParseFile(headerFile)
 
-    sourceFile = header.split(".h")[0] + ".cpp"
-    with open(sourceFile, "w") as sourceFile:
-        sourceFile.write("#include \"" + header + "\"\n\n")
+    filename = GenerateOutputFileName(header, interfaceEnabled) 
+    
+    with open(filename, "w") as outfile:
+        if interfaceEnabled:
+            className = genHeader.StripFileExtension(filename)
+            outfile.write(genHeader.GenerateOpenIFDef(className))
+            outfile.write("#include \"" + header + "\"\n\n")
+            outfile.write(genHeader.GenerateClassCode(className).split("}")[0] + "\n")
+        else:
+            outfile.write("#include \"" + header + "\"\n\n")
+
         for func in functionList:
             if interfaceEnabled:
-                sourceFile.write(AddOverride(func))
+                outfile.write(AddOverride(func))
             else:
-                sourceFile.write(AddBraces(GenerateSignature(className, func)))
+                outfile.write(AddBraces(GenerateSignature(className, func)))
+
+        if interfaceEnabled:
+            outfile.write("};\n\n")
+            outfile.write(genHeader.GenerateCloseIFDef(genHeader.StripFileExtension(filename)))
 
 def main():
     parser = argparse.ArgumentParser(description="Configure C++ Source Generator")
     parser.add_argument('fileName', type=str, help="Header file for which to generate source for")
-    parser.add_argument('interface', type=bool, default=false, help="Generate in interface mode")
+    parser.add_argument('interface', type=bool, default=False, help="Generate in interface mode")
 
     args = parser.parse_args()
     headerFile = args.fileName
